@@ -1,0 +1,88 @@
+---
+title: "607HW1"
+author: "Mengqin Cai"
+date: "8/31/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+Your task is to study the dataset and the associated description of the data (i.e. “data dictionary”). You may need to look around a bit, but it’s there! You should take the data, and create a data frame with a subset of the columns in the dataset. You should include the column that indicates edible or poisonous and three or four other columns. You should also add meaningful column names and replace the abbreviations used in the data—for example, in the appropriate column, “e” might become “edible.” Your deliverable is the R code to perform these transformation tasks.
+
+```{r }
+#Read Mushroom Data
+
+library(RCurl)
+x <- getURL("https://raw.githubusercontent.com/DaisyCai2019/Homework/master/agaricus-lepiota.csv")
+mushrooms <- read.csv(text = x,header=FALSE)
+
+head(mushrooms)
+dim(mushrooms)
+summary(mushrooms)
+
+#Add column name to the data
+names(mushrooms) <- c("edible_poisonous","shape","surface","color","bruises","odor","gill-attachment","gill-spacing","gill-size","gill-color","stalk-shape","stalk-root","stalk-surface-above-ring","stalk-surface-below-ring","stalk-color-above-ring","stalk-color-below-ring","veil-type","veil-color","ring-number","ring-type","spore-print-color","population","habitat")
+head(mushrooms)
+
+#subset the data 
+mushrooms<-subset(mushrooms,select=c(edible_poisonous,color,odor,habitat))
+head(mushrooms)
+tail(mushrooms)
+
+#Replace Abbreviations
+
+mushrooms$edible_poisonous <- as.character(mushrooms$edible_poisonous)
+mushrooms$edible_poisonous[mushrooms$edible_poisonous == "e"] <- "edible"
+mushrooms$edible_poisonous[mushrooms$edible_poisonous == "p"] <- "poisonous"
+
+mushrooms$color <- as.character(mushrooms$color)
+mushrooms$color[mushrooms$color == "n"] <- "brown"
+mushrooms$color[mushrooms$color == "b"] <- "buff"
+mushrooms$color[mushrooms$color == "c"] <- "cinnamon"
+mushrooms$color[mushrooms$color == "g"] <- "gray"
+mushrooms$color[mushrooms$color == "r"] <- "green"
+mushrooms$color[mushrooms$color == "p"] <- "pink"
+mushrooms$color[mushrooms$color == "u"] <- "purple"
+mushrooms$color[mushrooms$color == "e"] <- "red"
+mushrooms$color[mushrooms$color == "w"] <- "white"
+mushrooms$color[mushrooms$color == "y"] <- "yellow"
+
+
+
+mushrooms$odor <- as.character(mushrooms$odor)
+mushrooms$odor[mushrooms$odor == "a"] <- "almond"
+mushrooms$odor[mushrooms$odor == "l"] <- "anise"
+mushrooms$odor[mushrooms$odor == "c"] <- "creosote"
+mushrooms$odor[mushrooms$odor == "y"] <- "fishy"
+mushrooms$odor[mushrooms$odor == "f"] <- "foul"
+mushrooms$odor[mushrooms$odor == "m"] <- "musty"
+mushrooms$odor[mushrooms$odor == "n"] <- "none"
+mushrooms$odor[mushrooms$odor == "p"] <- "pungent"
+mushrooms$odor[mushrooms$odor == "s"] <- "spicy"
+
+
+mushrooms$habitat <- as.character(mushrooms$habitat)
+mushrooms$habitat[mushrooms$habitat=="g"]<-"grasses"
+mushrooms$habitat[mushrooms$habitat=="l"]<-"leaves"
+mushrooms$habitat[mushrooms$habitat=="m"]<-"meadows"
+mushrooms$habitat[mushrooms$habitat=="p"]<-"paths"
+mushrooms$habitat[mushrooms$habitat=="p"]<-"paths"
+mushrooms$habitat[mushrooms$habitat=="u"]<-"urban"
+mushrooms$habitat[mushrooms$habitat=="w"]<-"waste"
+mushrooms$habitat[mushrooms$habitat=="d"]<-"woods"
+
+head(mushrooms)
+
+#subset the data again with some critera
+subset(mushrooms,edible_poisonous=="edible" & color=="white" & odor=="anise" & habitat=="meadows")
+
+
+```
+
+
+
+
