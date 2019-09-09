@@ -1,0 +1,73 @@
+---
+title: "607_Homework2"
+author: "Mengqin Cai"
+date: "9/7/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Description
+
+Choose six recent popular movies.  Ask at least five people that you know (friends, family, classmates, imaginary friends) to rate each of these movie that they have seen on a scale of 1 to 5.  Take the results (observations) and store them in a SQL database.  Load the information into an R dataframe.
+
+
+## Load data into R
+```{r load data}
+library(RMySQL)
+
+drv <- dbDriver("MySQL")
+con <- dbConnect(drv, user="root", password = "password", dbname="movie", host="localhost")
+
+```
+
+
+## Show two tables of data
+```{r show-data}
+
+#All the data
+sql<-"select a.id, a.title,a.genre,b.personName,b.score
+      from movie a inner join review b
+      on a.id=b.movieID
+     
+      order by title
+"
+df <- data.frame(dbGetQuery(con, sql))
+df
+
+
+#Table with the average rating 
+
+sql2<-"select a.id, a.title, a.genre,avg(score)
+      from movie a inner join review b
+      on a.id=b.movieID
+      group by title
+      order by id
+      "
+df2 <- data.frame(dbGetQuery(con, sql2))
+df2
+
+```
+
+## Analysis of the data
+
+We use the bar to compare the average score of the rating.
+
+```{r analysis}
+
+summary(df)
+dim(df)
+
+
+barplot(df2$avg.score.~df2$id, xlab="Movies",ylab="Score",main="Average score of the Rating",names.arg = c("CrazyRich", "GoodBoys", "SpiderMan", "Scary", "BlinkEye", "Overcomer"))
+ 
+
+```
+
+
+
+
+
