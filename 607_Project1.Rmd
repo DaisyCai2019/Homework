@@ -1,0 +1,100 @@
+---
+title: "607_project1"
+author: "Mengqin Cai"
+date: "9/22/2019"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Project1
+
+In this project, you’re given a text file with chess tournament results where the information has some structure. Your job is to create an R Markdown file that generates a .CSV file (that could for example be imported into a SQL database) with the following information for all of the players:
+Player’s Name, Player’s State, Total Number of Points, Player’s Pre-Rating, and Average Pre Chess Rating of Opponents
+For the first player, the information would be:
+Gary Hua, ON, 6.0, 1794, 1605
+1605 was calculated by using the pre-tournament opponents’ ratings of 1436, 1563, 1600, 1610, 1649, 1663, 1716, and dividing by the total number of games played.
+
+## Import Data
+
+```{r data }
+
+tournament <- readLines("https://raw.githubusercontent.com/DaisyCai2019/Homework/master/tournamentinfo.txt")
+
+head(tournament)
+
+```
+
+## Extraction 
+```{r extraction}
+require(stringr)
+
+
+#Player’s Name
+name<-unlist(str_extract_all(tournament, "\\w+[^USCF|a-z] ?\\w+ \\w+"))
+name
+
+#Player’s State. We only have ON, MI and OH three states
+state<-unlist(str_extract_all(tournament, "( MI )|( OH )|( ON )"))
+state
+
+#Total Number of Points
+point<-unlist(str_extract_all(tournament, "\\d\\.\\d"))
+point
+
+#Player’s Pre-Rating 
+
+
+#extract information and remove "R:"
+preRating<-str_replace(unlist(str_extract_all(tournament, "(R:\\s*)(\\d+)")),"R: ","")
+
+#change to number
+preRating<-as.numeric(preRating)
+preRating
+
+
+#Average Pre Chess Rating of Opponents
+avgRating<-unlist(str_extract_all(tournament,  "\\|[0-9].*"))
+
+
+#Replace all the blanks without opponents’ information with 00 and extract the number
+avgRating <- str_extract_all(str_replace_all(avgRating, "\\s{1,2}\\|","00|"),"\\s\\d{1,2}")
+
+
+#change it to matrix and number
+avgRating <- matrix(unlist(avgRating),byrow=TRUE, nrow=length(avgRating) )
+avgRating <- t(apply(avgRating,1,as.numeric)) 
+
+#Loop through the whole avgRating number to replace the opponents’ number with their actual rating. 
+
+for (i in 1:nrow(avgRating)) {
+  for (j in 1:ncol(avgRating)){
+    if (avgRating[i,j] == 0){
+      avgRating[i,j] = NA
+    }
+  else{avgRating[i,j] <- preRating[avgRating[i,j]]}
+  }
+}
+
+#Caculate the Rating of Opponents
+avgRating <- c(rowMeans(avgRating, na.rm = TRUE))
+avgRating<-round(avgRating,0)
+avgRating
+
+
+```
+
+## Finalize and export all the data
+
+```{r export}
+final<-data.frame(name,state,point,preRating,avgRating)
+final
+write.csv(final, "data607_project1.csv", row.names=FALSE)
+```
+
+
+
