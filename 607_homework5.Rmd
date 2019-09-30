@@ -1,0 +1,93 @@
+---
+title: "607_homework5"
+author: "Mengqin Cai"
+date: "9/29/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Assignment – Tidying and Transforming Data
+
+The chart above describes arrival delays for two airlines across five destinations. Your task is to:
+(1) Create a .CSV file (or optionally, a MySQL database!) that includes all of the information above. You’re encouraged to use a “wide” structure similar to how the information appears above, so that you can practice tidying and transformations as described below.
+(2) Read the information from your .CSV file into R, and use tidyr and dplyr as needed to tidy and transform your data.
+(3) Perform analysis to compare the arrival delays for the two airlines.
+(4) Your code should be in an R Markdown file, posted to rpubs.com, and should include narrative descriptions of your data cleanup work, analysis, and conclusions. Please include in your homework submission:
+ The URL to the .Rmd file in your GitHub repository. and
+ The URL for your rpubs.com web page.
+
+
+## Load data
+Load the CSV data file from GitHub and read into R.
+
+```{r load}
+library(tidyr)
+library(dplyr)
+library(stringr)
+
+
+flight<-read.csv("https://raw.githubusercontent.com/DaisyCai2019/Homework/master/Flights.csv")
+flight
+
+```
+
+
+Clean data. Add the header Airline and Status to column 1 and 2. To make the data process easily, change "on time" to "on time" and add "_" to all the cities.
+
+
+```{r name}
+flight[,2] <- sapply(flight[,2], str_replace, " ", "_")
+flight <- rename(flight, airline=X,Status=X.1,Los_Angeles=Los.Angeles,San_Diego=San.Diego,San_Francisco=San.Francisco)
+flight
+```
+
+## Tidy Data
+
+Arrival cities are variable, not header. To make the data easy to use, we can create a column name city and move the header under the column city. At the same time, on time and delay are two variables, which can be expended as two columns. We use tidyr to process the data.
+
+
+```{r tidy_data}
+
+flight <- flight %>% 
+  gather(city, Frequency, 3:7) %>%  
+  spread(Status, Frequency)   
+  
+flight
+```
+
+We add delayed flights to on time flights to calculate the total number of flights by airlines and cities. Once we got those total numbers, we can use delayed flights to divide total flights. The result save in the column delayed rate. The following table sorted by the delayed rate. The table indicates AM West flight to San Francisco has the highest delayed rate, 28.73%.
+
+```{r percentage}
+
+flight<-flight%>% 
+  mutate(total_flights=delayed+on_time,delayed_rate=round((delayed/total_flights)*100,2))%>%
+ arrange(desc(delayed_rate)) 
+flight
+
+
+```
+
+## Data Analysis
+
+We will use the flight data to compare AM West and Alaska's delayed rate. In addition, find out which city have the highest delayed rate.
+
+
+```{r analysis}
+library(ggplot2)
+
+ggplot(flight, aes(y=delayed_rate,x=airline))+geom_boxplot()+geom_point()+ggtitle("Delayed Rate By Airline ")
+
+ggplot(flight, aes(y=delayed_rate,x=city))+geom_boxplot()+geom_point()+ggtitle("Delayed Rate by City")  
+  
+```
+
+
+## Conclusions
+
+We use boxplot to compare the delayed Rate by Airline and cities. The first plot indicates compare to Alaska, AM West's flight has higher delay rate. At the same time, when we look at those cities, San Francisco has the highest delayed rate. Traveler need to prepare for the flight delay if he/she need to fly to San Francisco. To the other hand, phoenix has the lowest delayed rate.
+
+
+
