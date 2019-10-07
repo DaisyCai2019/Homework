@@ -1,0 +1,260 @@
+---
+title: "607_project2"
+author: "Mengqin Cai"
+date: "10/6/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## DataSet I -Immigration
+
+These data set published by the United Nation, which calculates Female migrants as a percentage of the international migrant stock. The dataset compares different Asian countries or areas' female migrants as a percentage of the international migrant stock and shows their changes from 1990 to 2015.
+
+#### Load the data into R
+```{r cars}
+library(tidyr)
+library(dplyr)
+library(stringr)
+library(ggplot2)
+Immigration<-read.csv("https://raw.githubusercontent.com/DaisyCai2019/Homework/master/Immigration%20Data.csv")
+Immigration
+
+```
+
+
+#### change the header
+Some header is very long and need to be simplify. At the same time, we delete those annoying X before the year.
+
+```{r clean}
+
+cols <- c("Order","County","Code","Type","1990","1995","2000","2005","2010","2015","2017")
+colnames(Immigration) <- cols
+Immigration
+```
+
+
+#### Data tidy
+
+The data set year values as header name. It is not easy to process the data if we want to compare the data by country from 1995 to 2015. 
+
+```{r data tidy}
+
+Immigration<-gather(Immigration,"Year","Percentage",5:11)
+head(Immigration)
+```
+
+#### Data Analysis
+
+We calculate the average migrant rate of different Asian Countries or area, and try to find out which county or area has the highest female migrant rate. 
+
+```{r analysis}
+
+Immigration2<-Immigration%>%
+ 
+  group_by(County)%>%
+  mutate(mean=mean(Percentage))%>%
+  arrange(Year)
+  Immigration2
+
+ ggplot(Immigration2, aes(x=County, y=mean, fill=County)) +
+    geom_bar(stat="identity", position=position_dodge(), colour="black", width = 0.5) +
+    coord_flip() + 
+    ggtitle("Female migrants as a percentage of the international migrant stock") +
+    xlab("County") + ylab("Average percentage of the international migrant stock") 
+
+ 
+ 
+  
+ ggplot(Immigration,aes(x=Year,y=Percentage,group = 1,color = County))+geom_line()+facet_wrap(~County, scales = "free_x")+ggtitle("Change of female migrants as a percentage of the international migrant stock")+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+ 
+```
+
+As we can see from the graph, China Hong Kong SAR has 55.91% female migrants rate, which means Hong Kong’s female citizens have the tendency to move to other countries or areas. Quite opposite, Mongolia's female migrant rate is only 36.31%. From the yearly change of female migrants’ percentage graph, we can see Hong Kong's rate increase every year, but Mongolia have a really big drop every year.  
+
+
+
+## DataSet II -Income Distribution
+
+This table from Pew Pew Research Trust, which explores the relationship between incomes and religions.
+
+#### Load the data to R
+
+```{r data_loading}
+
+Income<-read.csv("https://raw.githubusercontent.com/DaisyCai2019/Homework/master/Income%20distribution2.csv")
+Income
+```
+
+#### change the header
+
+I simplify the header and remove X from the income header.
+
+```{r header}
+
+cols <- c("Religious","Less_than_$30,000","$30,000-$49,999","$50,000-$99,999","$100,000_or_more","Sample_Size")
+colnames(Income) <- cols
+Income
+
+```
+
+#### Tidy Data
+
+Income range shouldn't be the header. I create a variable named Income, and move the header under the income column.
+
+```{r income}
+
+Income<-gather(Income,"Income","Percentage",2:5)
+head(Income)
+```
+
+#### Data Analysis
+
+We select the income Less Than $30,000 and more than $100,000 to show the distribution of different Religious.
+
+```{r Low_income}
+ 
+Low_income<-Income%>%
+  filter(Income=="Less_than_$30,000")%>%
+  arrange(desc(Percentage))
+ Low_income   
+ 
+ ggplot(Low_income, aes(x=Religious, y=Percentage, fill=Religious)) +
+    geom_bar(stat="identity", position=position_dodge(), colour="black", width = 0.5) +
+    coord_flip() + 
+    ggtitle("Low-income Distribution by Religious") +
+    xlab("Religious") + ylab("Low_Income_Percentage") 
+ 
+ 
+ Low_income<-Income%>%
+  filter(Income=="$100,000_or_more")%>%
+  arrange(desc(Percentage))
+ Low_income   
+ 
+ ggplot(Low_income, aes(x=Religious, y=Percentage, fill=Religious)) +
+    geom_bar(stat="identity", position=position_dodge(), colour="black", width = 0.5) +
+    coord_flip() + 
+    ggtitle("High-income Distribution by Religious") +
+    xlab("Religious") + ylab("Low_Income_Percentage")
+ 
+```
+
+The data can provide information for government who offer benefits to the lowest income. From the graph we can see that the lowest income percentage for Historically Black Protestant and Jehovah's Witness is 0.53 and 0.48, respectively. Government need to do more to increase their incomes. We also find out some interesting fact that 44% of Jewish has income morn $100,000 per year. What cause the big difference and make Jewish rich? Sociologist may have many researches already.
+
+
+
+## DataSet III-American Math Society Survey
+
+
+#### Data Description:
+This dataset shows counts of new PhDs in the mathematical sciences for 2008-09 and 2011-12 categorized by type of institution, gender, and US citizenship status.
+
+A factor with levels I(Pu) for group I public universities, I(Pr) for group I private universities, II and III for groups II and III, IV for statistics and biostatistics programs, and Va for applied mathemeatics programs.
+
+
+```{r math_data}
+
+library(tidyr)
+library(dplyr)
+library(stringr)
+library(ggplot2)
+math<-read.csv("https://raw.githubusercontent.com/DaisyCai2019/Homework/master/AMSsurvey.csv")
+math
+```
+
+#### Change header name
+
+count means year range, 2008 to 2009 and count11 means 2011 to 2012.
+
+```{r header3}
+
+cols <- c("Num","Type","Sex","Citizen","2008-09","2011-12")
+colnames(math) <- cols
+math
+```
+
+#### Tidy Data
+
+The dataset has two variables, 2008-09 and 2011-12, but they should be observations under the column name year. We use gather() to change column into rows.
+
+```{r Tidy3}
+math<-gather(math,"Year","n",5:6)
+
+#math <- math %>% 
+  #gather(Year, Frequency, 5:6) %>%  
+  #spread(Sex, Frequency)   
+head(math)
+```
+
+#### Data Analysis
+
+```{r Analysis3}
+math2<-math%>%
+  group_by(Type,Sex)%>%
+  summarise(sum=sum(n))%>%
+  arrange(desc(sum)) 
+math2
+
+ggplot(data = math2, aes(x=Sex,y=sum))+
+  geom_bar(stat = 'identity',aes(fill=Type))+
+  geom_text(aes(x = Sex, y = sum, 
+                label = paste(sum),
+                group = Sex,
+                vjust = -0.01)) +
+  labs(title = "Phd Distribution", 
+       x = "Sex", 
+       y = "Number of Phdt") +
+  facet_wrap(~Type, ncol = 8)+
+  theme_bw()
+
+
+```
+
+
+The histogram shows the comparison of PhD number base on different types of institutions. From the sample data we collect, I(Pu), group I public universities, has the most male PhD students. But when we compare the number of female students, IV, statistics and biostatistics programs, has 329 female students. If the sample is large enough, we can get the conclusion that female PhD student prefer the statics and biostatistics programs.  
+
+
+
+```{r female_phd}
+ 
+math3<-math%>%
+  group_by(Sex)%>%
+  summarise(sum=sum(n))
+math3
+
+     ggplot(math3, aes(x=Sex, y=sum, fill=Sex)) +
+    geom_bar(stat="identity", position=position_dodge(), colour="black", width = 0.2) +
+    ggtitle("Female phd VS Male Phd") +
+    xlab("Sex") + ylab("Phd Number") 
+
+     
+math4<-math%>%
+  group_by(Citizen)%>%
+  summarise(sum=sum(n))
+math4
+
+ggplot(math4, aes(x=Citizen, y=sum, fill=Citizen))+
+    geom_bar(stat="identity", position=position_dodge(), colour="black", width = 0.2) +
+    ggtitle("Citizen phd VS Non-Citizen Phd") +
+    xlab("Citizen") + ylab("Phd Number") 
+
+math5<-math%>%
+  group_by(Year)%>%
+  summarise(sum=sum(n))
+math5
+
+ggplot(math5, aes(x=Year, y=sum, fill=Year))+
+    geom_bar(stat="identity", position=position_dodge(), colour="black", width = 0.2) +
+    ggtitle("The number of phd increase from 2018 to 2012") +
+    xlab("Year") + ylab("Phd Number")
+
+
+```
+
+#### Conclusion
+
+We will do more analysis base on the PhD student's sex, citizen and survey year.From the table, we can easily caculate total female Phd students'rate, 957/(957+2117)=31.13% and total Non Citizen Phd Rate,1612/(1612+1462)=52.44%.From 2008 to 2012, the totalnumber of Phd has (1644-1430)/1430=14.97% increase.
