@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<books>
+
+    <book id="1">
+
+        <Title>War and Peace</Title>
+
+        <Authors>Leo Tolstoy</Authors>
+
+        <Genre>Historical novel</Genre>
+
+        <Year>1869</Year>
+
+        <Country>Russia</Country>
+
+    </book>
+
+    <book id="2">
+
+        <Title>The Kite Runner</Title>
+
+        <Authors>Khaled Hosseini</Authors>
+
+        <Genre>Historical fiction/Drama/Classic</Genre>
+
+        <Year>2003</Year>
+
+        <Country>United States</Country>
+
+    </book>
+
+    <book id="3">
+
+        <Title>Good Omens</Title>
+
+        <Authors>Terry Pratchett & Neil Gaiman</Authors>
+
+        <Genre>Horror</Genre>
+
+        <Year>1990</Year>
+
+        <Country>United Kingdom</Country>
+
+    </book>
+
+</books>
