@@ -1,0 +1,477 @@
+---
+title: "Data607_Project 3"
+author: "Fan Xu,Zhi Ying Chen,Sin Ying Wong,Mengqin Cai"
+date: "10/20/2019"
+output:
+  html_document:
+    df_print: paged
+    toc: yes
+    toc_collapsed: yes
+    toc_float: yes
+  pdf_document:
+        extra_dependencies: ["geometry", "multicol", "multirow"]
+theme: lumen
+number_sections: yes
+toc_depth: 3
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+**Most valued data science skills**
+
+In this project, we are going to scrape information from CyberCoders, SimplyHired, and CareerBuilder, to answer the question: Which are the most valued data science skills?
+
+# Libraries
+
+The following libraries are used in this project.
+
+```{r Packages, message=FALSE}
+library(rvest)
+library(stringr)
+library(tidyverse)
+library(RCurl)
+library(tidyr)
+library(dplyr)
+library(stringr)
+library(ggplot2)
+library(wordcloud)
+```
+
+
+# Data Acquisition/Web Scraping
+
+
+We mainly use Cybercoders(https://www.cybercoders.com/), Simplyhired(https://www.simplyhired.com/) and CareerBuilder(https://www.careerbuilder.com ) as our data sources. 
+
+The strategy of scapping these three web state are the same.
+
+  1. Identify pages that need to be scrapped. Key word `Data Scientist` is input into each search engine.</br>
+    a. Cybercoders: Cybercoders doesn't contain many job posts regarding data scientist, therefore all pages are scrapped. The loop is stopped when no more job post can be found. </br>
+    b. Simplyhired: When manipulating the urls with increasing page numbers, we found that Simplyhired has endless pages for data scientist jobs, however the search results are duplicated. To get as more distinct job posts as we could, we scrap the first 200 pages, save the result to csv file and remove the duplicate values in the csv.</br>
+    c. Careerbuilder: Careerbuilders has endless pages for data scientist jobs as well. Therefore similar method as scapping Simplyhired.com is used. We scrap the first 50 pages, save the result to csv file and remove the duplicate values in the csv.</br>
+    
+  2. Conduct the scapping work. We reply on `RCurl`, `rvest` and `stringr` packages in this section. Five attributes are selected as target to be scrapped, which are job title, job skill, location, company and salary. Generally speaking, for each website, we scan all five attributes against the source codes, identify the best xpath to locate these data, store them in the pre-defined variables, and consolidate the variables into one dataframe.
+  
+  3. Store the data into csv for the following analysis. Three csv files are generated for the three websites respectively.
+
+## Cybercoders
+
+There are only around 60 records for data scientist jobs, runing the program doesn't cost much time. Therefore the complete program is run as demonstration in this project presentation.
+
+```{r Cybercoders,message=FALSE}
+#define base terms
+base_url <- 'https://www.cybercoders.com/'
+page <- 0
+terms <- 'data+scientist'
+
+#define variables as data container
+job_title <- character()
+job_skill <- character()
+job_location <- character()
+job_salary <- character()
+job_company <- character()
+
+
+#loop the pages and break whenever no more reocords can be found
+while(TRUE) {
+  page = page+1
+  #url <- getURL('https://www.cybercoders.com/search/?page=1&searchterms=data+scientist&searchlocation=&newsearch=true&originalsearch=true&sorttype=')
+  url <- getURL(str_c(base_url,'search/?page=',page,'&searchterms=',terms,'&searchlocation=&newsearch=true&originalsearch=true&sorttype='))
+  html_raw <- read_html(url)
+  
+  #locate the element with attribute class = job-title
+  job_title_page <- html_raw %>%
+    html_nodes("[class='job-title']") %>%
+    html_text() %>%
+    str_remove_all('\\r\\n') %>%
+    str_trim()
+
+  #locate the element with attribute class = skill-list, concatenate all skills into one text strings
+  job_skill_page <- html_raw %>%
+    html_nodes("[class='skill-list']") %>% 
+    lapply(function(x) html_nodes(x, "[class='skill-name']")) %>%
+    lapply(function(x) html_text(x)) %>%
+    lapply(function(x) str_c(x,collapse = ', ')) %>%
+    unlist()
+  
+  #locate the element with attribute class = location
+  job_location_page <- html_raw %>%
+    html_nodes("[class='location']") %>%
+    html_text() 
+  
+  #locate the element with attribute class = wage
+  job_salary_page <- html_raw %>%
+    html_nodes("[class='wage']") %>%
+    html_text() %>%
+    str_replace('[[:alpha:][:punct:]]+ (.+)$','\\1') %>%
+    str_remove_all(' ')
+  
+
+  # break the loop when no more record can be found
+  if (length(job_title_page)==0) {
+    page = page -1
+    break
+  }
+  
+  #store data
+  job_title <- c(job_title, job_title_page)
+  job_skill <- c(job_skill, job_skill_page)
+  job_location <-c(job_location, job_location_page)
+  job_salary <-c(job_salary, job_salary_page)
+  #No info at this website, but keep this variable as scrapping other websites do
+  job_company <- c(job_company, rep(NA,length(job_title_page)))
+  
+  #print progress
+  print(str_c(' Scrapping for Page: ',page, ' is done!'))
+
+}
+
+#consolidate all varialbles into a dataframe
+df_cyber_coders <- as.data.frame(cbind(job_title,job_skill, job_company, job_location, job_salary), stringsAsFactors = FALSE)
+
+str(df_cyber_coders)
+
+df_cyber_coders
+
+#write.table(df_cyber_coders, "df_cyber_coders.csv", sep = ",", col.names = !file.exists("df_cyber_coders.csv"), row.names = FALSE,append = TRUE)
+```
+
+## Simplyhired
+
+Similar as what is done in the previous section, but we limit the scrapping to the first 200 pages. However, runing the program is time consuming. Therefore we run the first 1 pages as demostration in this project presentation. The complete 200 pages file is stored in csv file.
+
+```{r Simplyhired,eval=FALSE}
+#simplyhired search page
+
+base_url <- 'https://www.simplyhired.com'
+page_start <- 1
+page_limit <-1 #200 
+terms <- 'data+scientist'
+
+#initiate dataframe as data containers
+
+
+df_simply_hired <- data.frame(job_title=character(),
+                   job_skill=character(),
+                   job_company=character(),
+                   job_location=character(),
+                   job_salary=character(),
+                   stringsAsFactors = FALSE)
+
+row_cnt = 0
+
+
+#loop each page
+for (page in page_start:page_limit) {
+  
+  #get URLs of individual job post
+  url <- getURL (str_c(base_url,'/search?q=', terms, '&pn=', page, '&l=&job=-q6yR-atece9p8LQvm2yP8xIX3VcYfRC9wsdPgSS0nWHIG3f2EZOxA'))
+  job_url <- read_html(url) %>%
+  html_nodes("[class='card-link']") %>%
+  html_attr('href') %>%
+  str_c(base_url,.,'')
+  
+  #print progress
+  print(str_c('Current Page: ', page, sep = ''))
+  
+  #loop job posts in each page (19 post per page)
+  for (i in (1:length(job_url))) {
+    html_raw <- read_html(job_url[i])
+  
+    #job title: locate the element <button> with attrbute title
+    job_title_page <- html_raw %>%
+      html_nodes(xpath = '//button[@title]') %>%
+      html_attr('title') %>%
+      .[1]  
+ 
+    #job skill: get the element <span> followed by another element <ul>
+    # get the elements with class = nav-item
+    #concate the texts of skills into one string separated by ', '
+    job_skill_page <- html_raw %>%
+      html_nodes(xpath = "//span[text()='Skills']/following-sibling::ul[1]") %>%
+      html_nodes("[class='nav-item']") %>%
+      html_text() %>%
+      str_c(collapse = ', ')
+    if (length(job_skill_page)==0) {
+      job_skill_page = NA
+    }
+
+    #job location: locate the element with class = location
+    job_location_page <- html_raw %>%
+      html_nodes("[class = 'location']") %>%
+      html_text()
+    if (length(job_location_page)==0) {
+      job_location_page = NA
+    }
+
+    #job salary: locate the element with special color:#666666
+    #convert the format of salary to: eg: $15,000 -> $15k
+    job_salary_page <-html_raw %>%
+        html_nodes("[style='color:#666666']") %>%
+        html_text() %>%
+        str_remove_all('[A-z: ]') %>%
+        str_replace_all('\\,000', 'k')
+    if (length(job_salary_page)==0) {
+      job_salary_page = NA
+    }
+
+    #job company: locate the element with class = company
+    job_company_page <- html_raw %>%
+        html_nodes("[class='company']") %>%
+        html_text()
+    if (length(job_company_page)==0) {
+      job_company_page = NA
+    }
+
+  #append data elements into data frame
+  df_simply_hired <- add_row(df_simply_hired,
+                   job_title=job_title_page,
+                   job_skill=job_skill_page,
+                   job_company=job_company_page,
+                   job_location=job_location_page,
+                   job_salary=job_salary_page)
+  
+  
+  #print progress
+  row_cnt = row_cnt+1
+  print(str_c('Task ',row_cnt,' Scrapping for: ',job_title_page, ' is done!', sep = ''))
+  Sys.sleep(1)  
+}
+  closeAllConnections()
+  Sys.sleep(1)
+}
+
+
+df_simply_hired
+
+#archive data into csv
+#write.table(df_simply_hired, "df_simply_hired2.csv", sep = ",", col.names = #!file.exists("df_simply_hired2.csv"), row.names = FALSE,append = TRUE)
+```
+
+
+## Careerbuilder
+
+We limit 50 search pages for CareeBuilder. As demonstration, we only run the first page.
+
+```{r careerbuilder,eval=FALSE}
+
+#career builder
+
+base_url <- 'https://www.careerbuilder.com'
+page_start = 1
+page_limit = 1
+terms <- 'data+scientist'
+
+df_career_builder <- data.frame(job_title=character(),
+                   job_skill=character(),
+                   job_company=character(),
+                   job_location=character(),
+                   job_salary=character(),
+                   stringsAsFactors = FALSE)
+
+
+
+#loop each page
+for (page in page_start:page_limit){
+
+#get URLs of individual job post
+url <- str_c(base_url,'/jobs?keywords=',terms,'&location=&page_number=',page)
+
+job_url <- read_html(url) %>%
+  html_nodes("[class='data-results-content block job-listing-item']") %>%
+  html_attr('href') %>%
+  str_c(base_url,.,'')
+
+
+
+for (i in (1:length(job_url))) {
+
+  html_raw <- read_html(job_url[i])  
+  
+  job_url[1]
+  
+  job_title_page <- html_raw %>%
+    html_nodes(xpath = "//title") %>%
+    html_text() %>%
+    str_remove_all('\\n') %>%
+    str_replace('(.*) Job in (.*) -(.*)$','\\1')
+   
+
+  
+  job_skill_page <- html_raw %>%
+    html_nodes("[class='check-bubble']") %>%
+    html_text() %>%
+    str_c(collapse = ', ')
+  if (length(job_skill_page)==0) {
+    job_skill_page = NA
+  }
+  
+  
+  job_location_page <- html_raw %>%
+    html_nodes(xpath = "//title") %>%
+    html_text() %>%
+    str_remove_all('\\n') %>%
+    str_replace('(.*) Job in (.*) -(.*)$','\\2')
+  if (length(job_location_page)==0) {
+    job_location_page = NA
+  }
+  
+  
+  job_company_page <- html_raw %>%
+    html_nodes(xpath = "//title") %>%
+    html_text() %>%
+    str_remove_all('\\n') %>%
+    str_replace('(.*) Job in (.*) -(.*)$','\\3') %>%
+    str_trim()
+  if (length(job_company_page)==0) {
+    job_company_page = NA
+  }
+    
+  
+  job_salary_page <- html_raw %>%
+    html_nodes("[class='salary-estimator_bubble_salary']") %>%
+    html_text() 
+  if (length(job_salary_page)==0) {
+    job_salary_page = NA
+  }
+  
+
+print(str_c('Progress: Page: ',page,' Job Title: ',job_title_page, ' is done!', sep = ''))  
+
+  
+df_career_builder <- add_row(df_career_builder,
+                   job_title=job_title_page,
+                   job_skill=job_skill_page,
+                   job_company=job_company_page,
+                   job_location=job_location_page,
+                   job_salary=job_salary_page)  
+  
+
+closeAllConnections()
+Sys.sleep(1)
+}
+Sys.sleep(1)
+}
+
+df_career_builder
+
+#write.table(df_career_builder, "df_career_builder.csv", sep = ",", col.names = !file.exists("df_career_builder.csv"), row.names = FALSE,append = TRUE)
+
+```
+
+
+# Data Loading
+
+The 5 search pages of Cybercoders, 200 search pages for Simply Hired and 50 pages for CareerBuilder have been generated as csv file. We need to load the data from GitHub to R.
+
+
+```{r Simply Hired2}
+
+df_cyber_coders <- read.csv('https://raw.githubusercontent.com/oggyluky11/DATA607-Project-3/master/df_cyber_coders.csv', stringsAsFactors = FALSE)
+
+df_cyber_coders
+
+
+df_simply_hired<-read.csv("https://raw.githubusercontent.com/DaisyCai2019/Homework/master/df_simply_hired2.csv", stringsAsFactors = FALSE)
+
+df_simply_hired
+
+
+df_career_builder<-read.csv("https://raw.githubusercontent.com/DaisyCai2019/Homework/master/df_career_builder.csv", stringsAsFactors = FALSE)
+
+df_career_builder
+
+```
+
+
+
+# Data Tidy
+
+All the job skills are under the job_skill column. To calculate those key words, we need to separate texts and put them back to the job_skill column. After separation and combine, we have total 10,000 rows for HireData table.
+
+```{r data_tidy}
+
+#cyber_coders 
+df_cyber_coders<-df_cyber_coders %>%
+  separate_rows(job_skill,sep=',',convert=TRUE) %>%
+  mutate(web = 'Cyber_Coders')
+df_cyber_coders
+
+
+#simply_hired
+df_simply_hired<-df_simply_hired %>%
+  separate_rows(job_skill,sep=',',convert=TRUE) %>% 
+  mutate(web = 'Simply_Hired')
+df_simply_hired
+
+#career_builder
+df_career_builder<-df_career_builder %>%
+  separate_rows(job_skill,sep=',',convert=TRUE) %>%
+  mutate(web = 'Career_Builder')
+df_career_builder
+
+HireData<- bind_rows(df_cyber_coders,df_simply_hired,df_career_builder)%>%
+  mutate(job_skill=str_trim(job_skill))
+
+HireData
+```
+
+# Data Analysis
+
+We calculate the frequency of key words in the column of job_skill, and sort by frequency in descending order. 
+
+```{r Analysis}
+
+library(plyr)
+
+Skills<-count(HireData, 'job_skill')%>%
+     filter(freq>=100)%>%
+     arrange(desc(freq)) 
+Skills
+
+       
+ggplot(Skills, aes(reorder(job_skill, freq), y=freq, fill=job_skill)) +
+    geom_bar(stat="identity", position=position_dodge(), width = 0.5) +
+    coord_flip() + 
+    ggtitle("Most Valued Data Science Skills") +
+    xlab("job_skill") + ylab("Freq")
+
+```
+
+We also interested in programming languages the employer need. To match with those key words in job_skill, we google some popular programming languages and create a vector to subset the HireData. Same as the most valued data science skills, we count the frequency and draw a graph.
+
+```{r Programming Language}
+
+
+Programming<-count(HireData, 'job_skill')%>%
+     filter(job_skill%in%c("Python","R","C","Java","SQL","Hadoop","Spark","SAS","Apache","Tableau","Hive","Scala","AWS","C++","Matlab","TensorFlow","Excel","Linux","Azure","Css","Html","Jupyter","NoSQL","Git"))%>%
+     arrange(desc(freq)) 
+Programming
+
+ggplot(tail(Programming, 25), aes(reorder(job_skill, freq), freq, fill=job_skill)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Top Programming Language",
+       x = "Programming Language", y = "freq") +
+  coord_flip()
+
+```
+
+
+# Conclusion
+
+Based on the results of these analyses, the top tech skills employers look for most in data scientists are expertise in R, SQL and Hadoop. Employers focus on these two tool skills when they look for candidates. At the same time, the result did not seem to be biased towards either soft or hard skills. For those soft skills, communication skills list as the most important soft skills. Good verbal and written communication skills are essential in order to deliver and understand information quickly and accurately.
+```{r wordcloud, message=FALSE, warning=FALSE}
+
+words <- HireData %>%
+  count("job_skill")
+
+wordcloud(words$job_skill, words$freq,random.order=FALSE, colors=brewer.pal(8, "Dark2"))
+
+
+```
+
+
+
+
