@@ -1,0 +1,76 @@
+---
+title: "Data607_Homwork_Week9"
+author: "Mengqin Cai"
+date: "10/27/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Web APIs
+
+The New York Times web site provides a rich set of APIs, as described here:
+https://developer.nytimes.com/apis
+You’ll need to start by signing up for an API key.
+
+Your task is to choose one of the New York Times APIs, construct an interface in R to read in the JSON data, and transform it into an R DataFrame.
+
+
+# Library
+
+```{r library }
+library(httr)
+library(jsonlite)
+library(dplyr)
+
+```
+
+
+# Retrieve book data from book API
+
+Define the search date as 2019-01-01 and use fromJSON to generate call. 
+
+```{r book}
+
+key <- "&api-key=76363c9e70bc401bac1e6ad88b13bd1d"
+url <- "http://api.nytimes.com/svc/books/v2/lists/overview.json?published_date=2019-01-01"
+req <- fromJSON(paste0(url, key))
+
+```
+
+# Output 
+
+Choose the two list of the bestsellers, combine and show the information of author, title, publisher and weeks_on_list. 
+
+```{r}
+
+bestsellers <- req$results$list
+category1 <- bestsellers[[1, "books"]]
+category2 <- bestsellers[[2, "books"]]
+category<-rbind(category1,category2)
+
+subset(category, select = c("author", "title", "publisher","weeks_on_list"))
+```
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
