@@ -1,0 +1,43 @@
+---
+title: "Recommender Systems with Uber Eats"
+author: "Mengqin Cai"
+date: "11/6/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Scenario Design analysis
+
+1) Who are the target users?
+
+The Uber Eats marketplace consists of three sides: eaters, restaurant-partners, and delivery-partners. Eaters discover and order food through the platform. Restaurant-partners use the platform as a sales channel to find customers. And delivery-partners earn income by picking up food from restaurants and delivering it to eaters.
+
+
+2) What are their key goals?
+
+Uber Eats helps the eater to find good food in their local area, help the restaurant owner to list their restaurants, and help the delivery-partners earn income.  
+
+3) How can you help them accomplish their goals?
+
+Uber Eats list many restaurants on their app, which include the restaurants’ introduction, reviews, food menu, delivery time, etc.  Easters who download their app can easily search their favorite food by their reviews and estimate the delivery time when they decide to order. For restaurant owners, they can list their food in the app, which help them to add more new customers and increase sales in a short time. To Uber Eats delivery partner, they can register, deliver the food, and get paid in a short time.
+
+
+## Reverse engineer
+
+
+From the moment an eater enters a query, Uber Eats try to understand their intent based on their knowledge of food organized as a graph, and then use a learned representation of eater intent to expand on this query, with the idea of surfacing the most relevant results. 
+
+Uber Eats’s recommendation system based on representation learning approach. A representation learning algorithm learns the features of entities, usually through latent vector space embedding. Inspired by GloVe algorithm, they designed query2vec model with their eater search behavior data.
+
+A greater part of the Uber Eats discovery process comes from the recommender system they built, designed to be both engaging to eaters and helpful to their restaurant partners. Within the three-sided marketplace, different sides cannot reach optimality simultaneously. Through frameworks such as multi-objective optimization and multi-armed bandit, they balance the needs of both restaurants and eaters in the Uber Eats marketplace.
+
+
+## Recommendations
+
+
+Uber Eats can consider friends’ recommendation when they recommend restaurants or dishes to their users. Every dishes can have a small recommendation logo under the picture. If the user click the button, system automatically save the data. When their friends near this location and want to search the nearby restaurants, the restaurants pop up as friends’ recommendation and matching dishes also list under the restaurants.
+
