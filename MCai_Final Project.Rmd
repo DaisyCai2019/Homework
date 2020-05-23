@@ -1,0 +1,418 @@
+---
+title: "MCai_Final project"
+author: "Mengqin Cai"
+date: "5/17/2020"
+output:
+  pdf_document:
+        extra_dependencies: ["geometry", "multicol", "multirow"]
+  html_document:
+    df_print: paged
+    toc: yes
+    toc_collapsed: yes
+    toc_float: yes
+theme: lumen
+number_sections: yes
+toc_depth: 3
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Problem 1
+
+
+Using R, generate a random variable X that has 10,000 random uniform numbers from 1 to N, where N can be any number of your choosing greater than or equal to 6.  Then generate a random variable Y that has 10,000 random normal numbers with a mean of $\mu=\sigma=(N+1)/2$
+
+```{r}
+library(tidyverse)
+#Generate random numbers
+
+set.seed(123)
+N<-10
+X<-runif(10000,1,N)
+Y<-rnorm(10000, mean=(N+1)/2, sd=(N+1)/2)
+df<-data.frame(X,Y)
+head(df)
+
+```
+
+## Probability
+
+
+Probability.   Calculate as a minimum the below probabilities a through c.  Assume the small letter "x" is estimated as the median of the X variable, and the small letter "y" is estimated as the 1st quartile of the Y variable.  Interpret the meaning of all probabilities.
+
+```{r}
+#median of the X
+x<-median(X)
+
+#1st quartile of the Y variable
+y<-quantile(Y, 0.25)
+```
+
+a.   P(X>x | X>y)	
+
+According the probability P(B|A)=P(A and B)/P(A), P(X>x | X>y)=P(X>x & X>y )/P(X>y)
+
+```{r}
+#P(X>x & X>y )
+PA1<-nrow(subset(df,X>x & X>y ))/nrow(df)
+#P(X>y)
+PA2<-(nrow(subset(df,X>y))/nrow(df))
+
+PA1/PA2
+
+
+
+```
+
+
+The probability of X>x, given the condition of X>y, is 0.551.
+
+b.  P(X>x, Y>y)	
+P(A and B) = P(A) * P(B), so P(X>x, Y>y)=P(X>x)*P(Y>y)
+
+```{r}
+#P(X>x)
+PA2<-nrow(subset(df,X>x))/nrow(df)
+#P(Y>y)
+PB2<-nrow(subset(df,Y>y))/nrow(df)
+
+PA2*PB2
+
+```
+
+The probability of X>x and Y>y occurs at the same time is 0.375.
+
+
+
+
+c.  P(X<x | X>y)
+
+According the probability P(B|A)=P(A and B)/P(A), P(X<x | X>y)=P(X<x & X>y )/P(X>y)
+
+```{r}
+#P(X<x & X>y )
+PA3<-nrow(subset(df,X<x & X>y))/nrow(df)
+
+#P(X>y)
+PB3<-nrow(subset(df,X>y))/nrow(df)
+
+PA3/PB3
+```
+
+The probability of X<x, given the condition of X>y, is 0.449.
+
+## Investigate
+5 points.   Investigate whether P(X>x and Y>y)=P(X>x)P(Y>y) by building a table and evaluating the marginal and joint probabilities.
+
+
+```{r}
+p1<-nrow(subset(df,X<x & Y<y))/nrow(df)
+p2<-nrow(subset(df,X>x & Y<y))/nrow(df)
+p3<-p1+p2
+p4<-nrow(subset(df,X<x & Y>y))/nrow(df)
+p5<-nrow(subset(df,X>x & Y>y))/nrow(df)
+p6<-p4+p5
+p7<-p1+p4
+p8<-p2+p5
+p9<-p7+p8
+
+
+table<-matrix(c(p1,p2,p3,p4,p5,p6,p7,p8,p9), ncol=3, nrow=3)
+colnames(table)<-c('Y<y','Y>y','Total')
+rownames(table)<-c('X<x','X>x','Total')
+table
+
+```
+
+ P(X>x and Y>y)=P(X>x)P(Y>y)?
+ 
+According to the table, the join probability of P(X>x and Y>y) is 0.3756. 
+ To Calculate the P(X>x)*P(Y>y) =0.5*0.75=0.375 and they are equal.
+
+ 
+## Independence
+
+5 points.  Check to see if independence holds by using Fisher’s Exact Test and the Chi Square Test.  What is the difference between the two? Which is most appropriate?
+
+Fisher's exact test of independence when you have two nominal variables and you want to see whether the proportions of one variable are different depending on the value of the other variable. Use it when the sample size is small.
+
+
+
+```{r}
+
+#Fisher’s Exact Test
+data<- table[-3,-3]
+data
+
+data<-10000*data
+fisher.test(data)
+
+#Chi Square Test
+chisq.test(data)
+
+```
+
+The P value for fisher Test and Chi-squared test is 0.7995,and we can't reject the null $H_0$, variables are independent and have no relationship.
+
+The chi-squared test applies an approximation assuming the sample is large, while the Fisher's exact test runs an exact procedure especially for small-sized samples. We have 1000 sample size and I prefer chi-squared test.
+
+
+# Problem 2
+You are to register for Kaggle.com (free) and compete in the House Prices: Advanced
+Regression Techniques competition.https://www.kaggle.com/c/house-prices-advanced-regression-techniques .  I want you to do the following.
+
+## Descriptive and Inferential Statistics. 
+
+Provide univariate descriptive statistics and appropriate plots for the training data set.  Provide a scatterplot matrix for at least two of the independent variables and the dependent variable. Derive a correlation matrix for any three quantitative variables in the dataset.  Test the hypotheses that the correlations between each pairwise set of variables is 0 and provide an 80% confidence interval.  Discuss the meaning of your analysis.  Would you be worried about familywise error? Why or why not?
+
+
+```{r}
+house<-data.frame(read.csv('https://raw.githubusercontent.com/DaisyCai2019/NewData/master/train.csv'))
+
+head(house)
+summary(house)
+```
+
+
+Univariate descriptive statistics and appropriate plots:
+
+```{r}
+hist(house$SalePrice,col='red')
+```
+
+Scatterplot Matrix :
+
+```{r}
+
+pairs(~SalePrice+YearBuilt+GrLivArea+LotArea, data=house,pch = 20)
+
+```
+
+Derive a correlation matrix for four quantitative variables in the dataset.  
+
+```{r}
+
+library(corrplot)
+df <- data.frame(house$SalePrice,house$LotArea,house$YearBuilt,house$GrLivArea)
+cormatrix <- round(cor(df),4)
+cormatrix
+
+
+library("PerformanceAnalytics")
+chart.Correlation(cormatrix, histogram=TRUE, pch=19)
+
+```
+
+Test the hypotheses that the correlations between each pairwise set of variables is 0 and provide an 80% confidence interval.  
+
+```{r}
+cor.test(house$LotArea,house$SalePrice,conf.level = 0.8)
+
+```
+
+The P value is very close to 0 and 80 percent confidence interval is between 0.2323391 and 0.2947946, which means Lot Size positively relate to the price. The 80 percent confidence interval is lower than 0.5, which indicate the relation is not so strong. 
+
+```{r}
+cor.test(house$YearBuilt,house$SalePrice,conf.level = 0.8)
+```
+
+The P value is very close to 0 and 80 percent confidence interval is between 0.4980766 and 0.5468619, which means Building year positively relate to the price. The 80 percent confidence interval is around 0.5.
+
+```{r}
+cor.test(house$GrLivArea,house$SalePrice,conf.level = 0.8)
+```
+
+The P value is very close to 0 and 80 percent confidence interval is between 0.6915087 and 0.7249450, which means ground live in area positively relate to the price. The 80 percent confidence interval is much greater than 0.5, which means that ground live in area is a critical factor to the price.
+
+
+Would you be worried about familywise error? Why or why not?
+
+I don't afraid of making familywise error because all the P value is very small and almost close to 0. We can safely deny the null hypothesis and conclude that these variables are  correlated to the sales price.
+
+
+
+
+## Linear Algebra and Correlation
+
+Invert your correlation matrix from above. (This is known as the precision matrix and contains variance inflation factors on the diagonal.) Multiply the correlation matrix by the precision matrix, and then multiply the precision matrix by the correlation matrix. Conduct LU decomposition on the matrix.  
+
+Invert the correlation matrix:
+
+```{r}
+
+precision<-round(solve(cormatrix),4)
+precision
+```
+
+Multiply the correlation matrix by the precision matrix:
+
+```{r}
+Multicp<-cormatrix%*%precision
+round(Multicp,3)
+```
+
+
+multiply the precision matrix by the correlation matrix
+
+```{r}
+Multipc<-precision%*%cormatrix
+round(Multipc,3)
+```
+
+LU Decomposition:
+
+LU on correlation matrix:
+```{r}
+library(matrixcalc)
+lu_cormatrix<-lu.decomposition( cormatrix )
+lu_cormatrix
+```
+
+LU on precision matrix:
+
+```{r}
+
+lu_precision <- lu.decomposition( precision )
+lu_precision
+```
+
+## Calculus-Based Probability & Statistics
+Many times, it makes sense to fit a closed form distribution to data.  Select a variable in the Kaggle.com training dataset that is skewed to the right, shift it so that the minimum value is absolutely above zero if necessary.  Then load the MASS package and run fitdistr to fit an exponential probability density function.  (See  https://stat.ethz.ch/R-manual/R-devel/library/MASS/html/fitdistr.html ).  Find the optimal value of $\lambda$ for this distribution, and then take 1000 samples from this exponential distribution using this value (e.g., rexp(1000, $\lambda$)).  Plot a histogram and compare it with a histogram of your original variable.   Using the exponential pdf, find the 5th and 95th percentiles using the cumulative distribution function (CDF).   Also generate a 95% confidence interval from the empirical data, assuming normality.  Finally, provide the empirical 5th percentile and 95th percentile of the data.  Discuss.
+
+
+I pick ground live area as the right skewed variable.
+
+```{r}
+hist(house$GrLivArea, col='green',breaks = 40)
+summary(house$GrLivArea)
+
+```
+
+
+Load the MASS package and run fitdistr to fit an exponential probability density function.  
+```{r}
+library(MASS)
+
+GrLiv<-fitdistr(house$GrLivArea, densfun = 'exponential')
+lambda <- GrLiv$estimate
+lambda
+```
+
+The optimal value of $\lambda$ is 0.000659864.
+
+
+
+Take 1000 samples from this exponential distribution using this value (e.g., rexp(1000, $\lambda$)). 
+```{r}
+ExpDis <- rexp(1000, lambda)
+summary(ExpDis)
+```
+
+Plot a histogram and compare it with a histogram of your original variable.
+
+```{r}
+hist(ExpDis,col='pink',breaks = 40,main = "Histogram of fit exponential function ")
+```
+
+Using the exponential pdf, find the 5th and 95th percentiles using the cumulative distribution function (CDF).   
+
+```{r}
+#5th and 95th percentiles
+qexp(c(0.05,0.95), lambda)
+```
+So the 5th percentiles is 77.73313 and 95th percentiles is 4539.92351
+
+
+Also generate a 95% confidence interval from the empirical data, assuming normality.
+```{r}
+qnorm(0.95,mean(house$GrLivArea),sd(house$GrLivArea))
+
+```
+
+Provide the empirical 5th percentile and 95th percentile of the data.
+```{r}
+quantile(house$GrLivArea,c(0.05,0.95))
+
+```
+
+The mean value of the original data and exponential distribution are very closed, 1515 and 1529.133, respectively. We see that the center of the exponential distribution is shifted left as compared the empirical data. Additionally we see more spread in the exponential distribution. The 5th and 95th percentiles of exponential pdf is 77.73 and 4539.92, and the empirical data is 848.0 and 2466.1, which means exponential distribution function is not a good fit.
+
+
+
+## Modeling
+
+Build some type of multiple regression model and submit your model to the competition board.
+Provide your complete model summary and results with analysis.Report your Kaggle.com user name and score.
+
+```{r}
+#only choose the numeric data
+NewData<- sapply(house, is.numeric)
+train<-house[,NewData]
+head(train)
+
+
+```
+
+```{r}
+#construct the correlation matrix and sort by the number
+cor <- data.frame(cor(train))
+cor <- cor[order(cor$SalePrice, decreasing=T),]
+head(cor)
+
+CorPrice <- cor$SalePrice
+names(CorPrice) <- rownames(cor)
+CorPrice
+
+```
+
+```{r}
+
+#Plot the positive number variables into the model
+
+price<-lm(SalePrice~OverallQual+GrLivArea+GarageCars+GarageArea+TotalBsmtSF+X1stFlrSF+FullBath+TotRmsAbvGrd+YearBuilt+YearRemodAdd+Fireplaces+BsmtFinSF1+WoodDeckSF+X2ndFlrSF+OpenPorchSF+HalfBath+BsmtFullBath+BsmtUnfSF+BedroomAbvGr+ScreenPorch+PoolArea+X3SsnPorch,data=train)
+
+summary(price)
+
+```
+
+
+```{r}
+#Use backward method to eliminated some variables
+
+price<-lm(SalePrice~OverallQual+GarageCars+TotalBsmtSF+X1stFlrSF+TotRmsAbvGrd+YearBuilt+YearRemodAdd+Fireplaces+BsmtFinSF1+WoodDeckSF+X2ndFlrSF+BsmtFullBath+BedroomAbvGr+ScreenPorch,data=train)
+summary(price)
+```
+
+
+```{r}
+test<-read.csv('https://raw.githubusercontent.com/DaisyCai2019/NewData/master/test.csv')
+head(test)
+
+PricePred <- predict(price, test) 
+summary(PricePred)
+hist(PricePred,col = 'blue')
+
+```
+
+
+
+```{r}
+
+TestResult <- data.frame( Id = test[,"Id"],  SalePrice =PricePred)
+TestResult[TestResult<0] <- 0
+TestResult <- replace(TestResult,is.na(TestResult),0)
+write.csv(TestResult, file="Prediction of House price.csv", row.names = FALSE)
+```
+
+
+```{r, echo=FALSE, fig.cap="Test Score", out.width = '100%'}
+knitr::include_graphics("Test Score.JPG")
+```
+
+Test Score: 0.64792
+
+User Name: xixi2019
+
+
